@@ -1,27 +1,42 @@
 #!/usr/bin/env bash
-# docker run -it --rm \
-# 	-v $(pwd):/certs \
-# 	-v $(pwd)/client:/client \
-# 	--env-file $(pwd)/ca.env \
-# 	--env-file $(pwd)/client.env \
-# 	paulczar/omgwtfssl
-# docker run -it --rm \
-# 	-v $(pwd):/certs \
-# 	-v $(pwd)/server:/server \
-# 	--env-file $(pwd)/ca.env \
-# 	--env-file $(pwd)/server.env \
-# 	paulczar/omgwtfssl
+root="$( cd $(dirname "$0") && pwd -P )/.."
 
-sudo chown -R $USER:$USER ./**/*
-chmod 0400 ./ca/ca-key.pem ./server/key.pem ./client/key.pem
-chmod 0444 ./ca/ca-cert.pem ./server/cert.pem ./client/cert.pem
+create_client() {
+	docker run -it --rm \
+		-v ${root}:/certs \
+		-v ${root}/client:/client \
+		--env-file ${root}/ca.env \
+		--env-file ${root}/client.env \
+		paulczar/omgwtfssl
+}
 
-ln -s $(pwd)/ca/ca-cert.pem ${HOME}/.docker/ca.pem
-ln -s $(pwd)/client/key.pem ${HOME}/.docker/key.pem
-ln -s $(pwd)/client/cert.pem ${HOME}/.docker/cert.pem
+create_server() {
+	docker run -it --rm \
+		-v ${root}:/certs \
+		-v ${root}/server:/server \
+		--env-file ${root}/ca.env \
+		--env-file ${root}/server.env \
+		paulczar/omgwtfssl
+}
 
-sudo ln -s $(pwd)/ca/ca-cert.pem /opt/.docker/ca.pem
-sudo ln -s $(pwd)/server/key.pem /opt/.docker/key.pem
-sudo ln -s $(pwd)/server/cert.pem /opt/.docker/cert.pem
+ownership() {
+	sudo chown -R $USER:$USER ${root}/**/*
+	chmod 0400 ${root}/ca/ca-key.pem ${root}/server/key.pem ${root}/client/key.pem
+	chmod 0444 ${root}/ca/ca-cert.pem ${root}/server/cert.pem ${root}/client/cert.pem
+}
 
-sudo ln -s $(pwd)/docker/daemon.json /etc/docker/daemon.json
+prepare_home() {
+	ln -s ${root}/ca/ca-cert.pem ${HOME}/.docker/ca.pem
+	ln -s ${root}/client/key.pem ${HOME}/.docker/key.pem
+	ln -s ${root}/client/cert.pem ${HOME}/.docker/cert.pem
+}
+
+prepare_server() {
+	sudo ln -s ${root}/ca/ca-cert.pem /opt/.docker/ca.pem
+	sudo ln -s ${root}/server/key.pem /opt/.docker/key.pem
+	sudo ln -s ${root}/server/cert.pem /opt/.docker/cert.pem
+}
+
+prepare_docker() {
+	sudo ln -s ${root}/docker/daemon.json /etc/docker/daemon.json
+}

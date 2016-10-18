@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-root="$( cd $(dirname "$0") && pwd -P )/.."
+root="$( cd $(dirname "$0") && pwd -P )"
+echo "root $root"
 
 create_client() {
+	echo "create client certs"
 	docker run -it --rm \
 		-v ${root}:/certs \
 		-v ${root}/client:/client \
@@ -11,6 +13,7 @@ create_client() {
 }
 
 create_server() {
+	echo "create server certs"
 	docker run -it --rm \
 		-v ${root}:/certs \
 		-v ${root}/server:/server \
@@ -20,23 +23,46 @@ create_server() {
 }
 
 ownership() {
+	echo "change ownership to user"
 	sudo chown -R $USER:$USER ${root}/**/*
 	chmod 0400 ${root}/ca/ca-key.pem ${root}/server/key.pem ${root}/client/key.pem
 	chmod 0444 ${root}/ca/ca-cert.pem ${root}/server/cert.pem ${root}/client/cert.pem
 }
 
 prepare_home() {
+	echo "link client certs to home folder"
 	ln -s ${root}/ca/ca-cert.pem ${HOME}/.docker/ca.pem
 	ln -s ${root}/client/key.pem ${HOME}/.docker/key.pem
 	ln -s ${root}/client/cert.pem ${HOME}/.docker/cert.pem
 }
 
 prepare_server() {
+	echo "link server certs to docker folder"
 	sudo ln -s ${root}/ca/ca-cert.pem /opt/.docker/ca.pem
 	sudo ln -s ${root}/server/key.pem /opt/.docker/key.pem
 	sudo ln -s ${root}/server/cert.pem /opt/.docker/cert.pem
 }
 
 prepare_docker() {
+	echo "link docker daemon configuration"
 	sudo ln -s ${root}/docker/daemon.json /etc/docker/daemon.json
+	sudo ln -s ${root}/docker/docker.service /etc/systemd/system/docker.service
 }
+
+restart_docker() {
+	echo "restart docker service"
+	sudo systemctl daemon-reload
+	sudo systemctl restart docker
+}
+
+main() {
+	create_client
+	create_server
+	ownership
+	prepare_home
+	prepare_server
+	prepare_docker
+	restart_docker
+}
+
+main

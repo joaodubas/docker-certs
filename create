@@ -31,22 +31,54 @@ ownership() {
 
 prepare_home() {
 	echo "link client certs to home folder"
-	ln -s ${root}/ca/ca-cert.pem ${HOME}/.docker/ca.pem
-	ln -s ${root}/client/key.pem ${HOME}/.docker/key.pem
-	ln -s ${root}/client/cert.pem ${HOME}/.docker/cert.pem
+	local ca_sm=${HOME}/.docker/ca.pem
+	local key_sm=${HOME}/.docker/key.pem
+	local cert_sm=${HOME}/.docker/cert.pem
+
+	if [ ! -L "${ca_sm}" ]; then
+		ln -s ${root}/ca/ca-cert.pem ${ca_sm}
+	fi
+
+	if [ ! -L "${key_sm}" ]; then
+		ln -s ${root}/client/key.pem ${key_sm}
+	fi
+
+	if [ ! -L "${cert_sm}" ]; then
+		ln -s ${root}/client/cert.pem ${cert_sm}
+	fi
 }
 
 prepare_server() {
 	echo "link server certs to docker folder"
-	sudo ln -s ${root}/ca/ca-cert.pem /opt/.docker/ca.pem
-	sudo ln -s ${root}/server/key.pem /opt/.docker/key.pem
-	sudo ln -s ${root}/server/cert.pem /opt/.docker/cert.pem
+	local ca_sm=/opt/.docker/ca.pem
+	local key_sm=/opt/.docker/key.pem
+	local cert_sm=/opt/.docker/cert.pem
+
+	if [ ! -L "${ca_sm}" ]; then
+		sudo ln -s ${root}/ca/ca-cert.pem ${ca_sm}
+	fi
+
+	if [ ! -L "${key_sm}" ]; then
+		sudo ln -s ${root}/server/key.pem ${key_sm}
+	fi
+
+	if [ ! -L "${cert_sm}" ]; then
+		sudo ln -s ${root}/server/cert.pem ${cert_sm}
+	fi
 }
 
 prepare_docker() {
 	echo "link docker daemon configuration"
-	sudo ln -s ${root}/docker/daemon.json /etc/docker/daemon.json
-	sudo ln -s ${root}/docker/docker.service /etc/systemd/system/docker.service
+	local daemon_sm=/etc/docker/daemon.json
+	local service_sm=/etc/systemd/system/docker.service
+
+	if [ ! -L "${daemon_sm}" ]; then
+		sudo ln -s ${root}/docker/daemon.json ${daemon_sm}
+	fi
+
+	if [ ! -L "${service_sm}" ]; then
+		sudo ln -s ${root}/docker/docker.service ${service_sm}
+	fi
 }
 
 restart_docker() {
